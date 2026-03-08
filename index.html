@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --card-front: #141c2e;
+    --card-back: #0d1f3c;
+    --orange: #ff6b2b;
+    --orange-dim: rgba(255,107,43,0.15);
+    --cyan: #00d4ff;
+    --cyan-dim: rgba(0,212,255,0.1);
+    --text: #e8edf5;
+    --muted: #7a8599;
+    --border: rgba(255,255,255,0.07);
+    --green: #00e676;
+    --yellow: #ffd740;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; width: 100%; max-width: 720px; }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+    position: relative;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--orange-dim);
+    border: 1px solid rgba(255,107,43,0.3);
+    border-radius: 100px;
+    padding: 6px 18px;
+    margin-bottom: 16px;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--orange);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .logo span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--orange);
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 400;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Language Switcher */
+  .lang-switcher {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  .lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 100px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.5px;
+  }
+
+  .lang-btn:hover {
+    border-color: var(--orange);
+    color: var(--text);
+    transform: translateY(-2px);
+  }
+
+  .lang-btn.active {
+    background: var(--orange-dim);
+    border-color: var(--orange);
+    color: var(--orange);
+    box-shadow: 0 0 16px rgba(255,107,43,0.15);
+  }
+
+  .lang-btn svg {
+    width: 24px;
+    height: 16px;
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  /* Category tabs */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 24px;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .tab:hover { border-color: var(--orange); color: var(--text); }
+  .tab.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .progress-bar-outer {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--orange), var(--cyan));
+    border-radius: 100px;
+    transition: width 0.5s ease;
+  }
+
+  .progress-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .progress-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--orange);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+
+  /* Stats */
+  .stats {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .stat {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 22px;
+    font-weight: 800;
+    display: block;
+  }
+
+  .stat-num.green { color: var(--green); }
+  .stat-num.yellow { color: var(--yellow); }
+  .stat-num.orange { color: var(--orange); }
+
+  .stats-title {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-top: 2px;
+    display: block;
+  }
+
+  .stat-sub {
+    font-size: 9px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    opacity: 0.6;
+    display: block;
+  }
+
+  /* Card scene */
+  .scene {
+    perspective: 1200px;
+    width: 100%;
+    margin-bottom: 24px;
+    cursor: pointer;
+  }
+
+  .card {
+    width: 100%;
+    min-height: 280px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    min-height: 280px;
+    border-radius: 20px;
+    padding: 36px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .card-front {
+    background: var(--card-front);
+    border: 1px solid rgba(255,107,43,0.2);
+    box-shadow: 0 0 40px rgba(255,107,43,0.05), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .card-back {
+    background: var(--card-back);
+    border: 1px solid rgba(0,212,255,0.2);
+    box-shadow: 0 0 40px rgba(0,212,255,0.05), inset 0 1px 0 rgba(255,255,255,0.05);
+    transform: rotateY(180deg);
+  }
+
+  .card-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    width: fit-content;
+  }
+
+  .tag-q { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(255,107,43,0.3); }
+  .tag-a { background: var(--cyan-dim); color: var(--cyan); border: 1px solid rgba(0,212,255,0.3); }
+
+  .card-num {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .card-level {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+
+  .level-beginner { background: rgba(0,230,118,0.1); color: var(--green); }
+  .level-intermediate { background: rgba(255,215,64,0.1); color: var(--yellow); }
+  .level-advanced { background: rgba(255,107,43,0.1); color: var(--orange); }
+
+  .question-text {
+    font-size: clamp(16px, 2.5vw, 22px);
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: -0.3px;
+  }
+
+  .answer-text {
+    font-size: clamp(13px, 2vw, 16px);
+    line-height: 1.7;
+    color: #c8d4e8;
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+  }
+
+  .flip-hint {
+    position: absolute;
+    bottom: 20px;
+    right: 24px;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .flip-icon {
+    font-size: 14px;
+    animation: rotate 3s linear infinite;
+  }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Feedback buttons */
+  .feedback {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .feedback-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .feedback-btn:hover { transform: translateY(-2px); }
+
+  .btn-knew {
+    border-color: rgba(0,230,118,0.3);
+    color: var(--green);
+  }
+  .btn-knew:hover { background: rgba(0,230,118,0.1); border-color: var(--green); }
+
+  .btn-almost {
+    border-color: rgba(255,215,64,0.3);
+    color: var(--yellow);
+  }
+  .btn-almost:hover { background: rgba(255,215,64,0.1); border-color: var(--yellow); }
+
+  .btn-nope {
+    border-color: rgba(255,107,43,0.3);
+    color: var(--orange);
+  }
+  .btn-nope:hover { background: rgba(255,107,43,0.1); border-color: var(--orange); }
+
+  /* Navigation */
+  .nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .nav-btn:hover:not(:disabled) { border-color: var(--orange); transform: translateY(-2px); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .nav-btn.primary {
+    background: var(--orange);
+    border-color: var(--orange);
+    flex: 2;
+  }
+  .nav-btn.primary:hover { background: #ff7d44; border-color: #ff7d44; }
+
+  /* Study plan */
+  .plan {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .plan-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--orange);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .plan-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .plan-item:last-child { border-bottom: none; }
+
+  .plan-day {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    min-width: 50px;
+    font-weight: 500;
+  }
+
+  .plan-topic { flex: 1; color: var(--text); }
+
+  .plan-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Keyboard hint */
+  .kbd-hint {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .kbd {
+    display: inline-block;
+    padding: 2px 7px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 10px;
+  }
+
+  /* Shuffle badge */
+  .shuffle-btn {
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .shuffle-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  .top-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <span>AWS Cert Prep</span>
+    </div>
+    <h1>AWS <em>Flash</em>cards</h1>
+    <p class="subtitle" id="subtitle">100 soru · Beginner → Advanced · Sertifika odaklı</p>
+
+    <!-- Language Switcher -->
+    <div class="lang-switcher">
+      <button class="lang-btn active" id="lang-tr" onclick="switchLang('tr')">
+        <!-- Turkey Flag SVG -->
+        <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+          <rect width="1200" height="800" fill="#E30A17"/>
+          <circle cx="425" cy="400" r="200" fill="#ffffff"/>
+          <circle cx="475" cy="400" r="160" fill="#E30A17"/>
+          <polygon fill="#ffffff" points="583,400 530,424 541,374 504,344 555,339 583,294 611,339 662,344 625,374 636,424"/>
+        </svg>
+        <span>Türkçe</span>
+      </button>
+      <button class="lang-btn" id="lang-en" onclick="switchLang('en')">
+        <!-- UK Flag SVG -->
+        <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+          <clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+          <clipPath id="t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+          <g clip-path="url(#s)">
+            <path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+            <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/>
+            <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+            <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
+          </g>
+        </svg>
+        <span>English</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Study Plan -->
+  <div class="plan" id="plan">
+    <div class="plan-title" id="plan-title"></div>
+    <div id="plan-items"></div>
+  </div>
+
+  <!-- Category Tabs -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- Top controls -->
+  <div class="top-controls">
+    <span class="section-label" id="section-label"></span>
+    <button class="shuffle-btn" id="shuffle-btn" onclick="shuffle()"></button>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="progress-bar" style="width:0%"></div>
+    </div>
+    <span class="progress-count" id="progress-count">0 / 0</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-title" id="stats-title"></div>
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-num green" id="stat-knew">0</span>
+      <span class="stat-label" id="label-knew"></span>
+      <span class="stat-sub" id="sub-knew"></span>
+    </div>
+    <div class="stat">
+      <span class="stat-num yellow" id="stat-almost">0</span>
+      <span class="stat-label" id="label-almost"></span>
+      <span class="stat-sub" id="sub-almost"></span>
+    </div>
+    <div class="stat">
+      <span class="stat-num orange" id="stat-nope">0</span>
+      <span class="stat-label" id="label-nope"></span>
+      <span class="stat-sub" id="sub-nope"></span>
+    </div>
+  </div>
+
+  <!-- Flashcard -->
+  <div class="scene" onclick="flipCard()">
+    <div class="card" id="card">
+      <!-- Front -->
+      <div class="card-face card-front">
+        <span class="card-level" id="card-level"></span>
+        <span class="card-num" id="card-num"></span>
+        <div class="card-tag tag-q" id="tag-q"></div>
+        <p class="question-text" id="question-text"></p>
+        <div class="flip-hint" id="flip-hint"></div>
+      </div>
+      <!-- Back -->
+      <div class="card-face card-back">
+        <span class="card-level" id="card-level-back"></span>
+        <div class="card-tag tag-a" id="tag-a"></div>
+        <p class="answer-text" id="answer-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback -->
+  <div class="feedback" id="feedback" style="display:none">
+    <button class="feedback-btn btn-knew" id="btn-knew" onclick="markCard('knew')"></button>
+    <button class="feedback-btn btn-almost" id="btn-almost" onclick="markCard('almost')"></button>
+    <button class="feedback-btn btn-nope" id="btn-nope" onclick="markCard('nope')"></button>
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav">
+    <button class="nav-btn" id="btn-prev" onclick="prevCard()"></button>
+    <button class="nav-btn primary" id="btn-next" onclick="nextCard()"></button>
+  </div>
+
+  <div class="kbd-hint" id="kbd-hint"></div>
+</div>
+
+<script>
+// ========== UI TEXTS ==========
+const uiText = {
+  tr: {
+    subtitle: "100 soru · Beginner → Advanced · Sertifika odaklı",
+    planTitle: "📅 Çalışma Planın",
+    plan: [
+      { day:"Gün 1-3", topic:"Beginner: AWS General, EC2, S3, RDS", time:"~45 dk/gün" },
+      { day:"Gün 4-6", topic:"Intermediate: EC2 adv., S3 adv., IAM", time:"~45 dk/gün" },
+      { day:"Gün 7-10", topic:"Advanced: Lambda, CloudFormation, DynamoDB", time:"~50 dk/gün" },
+      { day:"Gün 11-14", topic:"Advanced: VPC, CloudWatch, ECS, ELB, Security", time:"~50 dk/gün" },
+      { day:"Gün 15+", topic:'Tekrar — sadece "Bilmedim" kartları', time:"~30 dk/gün" }
+    ],
+    allLabel: "Tümü",
+    allCards: "Tüm Kartlar",
+    shuffle: "⟳ Karıştır",
+    statsTitle: "Cevap Sayacı — Kartı çevirdikten sonra seçimini yap",
+    knew: "✓ Bildim",
+    almost: "~ Yakındım",
+    nope: "✗ Bilmedim",
+    cardSub: "kart",
+    tagQ: "❓ Soru",
+    tagA: "💡 Cevap",
+    flipHint: "tıkla / Space",
+    prev: "← Geri",
+    next: "İleri →",
+    kbdHint: '<kbd class="kbd">Space</kbd> çevir &nbsp;<kbd class="kbd">→</kbd> ileri &nbsp;<kbd class="kbd">←</kbd> geri',
+    levelBeginner: "Başlangıç",
+    levelIntermediate: "Orta",
+    levelAdvanced: "İleri"
+  },
+  en: {
+    subtitle: "100 questions · Beginner → Advanced · Cert focused",
+    planTitle: "📅 Study Plan",
+    plan: [
+      { day:"Day 1-3", topic:"Beginner: AWS General, EC2, S3, RDS", time:"~45 min/day" },
+      { day:"Day 4-6", topic:"Intermediate: EC2 adv., S3 adv., IAM", time:"~45 min/day" },
+      { day:"Day 7-10", topic:"Advanced: Lambda, CloudFormation, DynamoDB", time:"~50 min/day" },
+      { day:"Day 11-14", topic:"Advanced: VPC, CloudWatch, ECS, ELB, Security", time:"~50 min/day" },
+      { day:"Day 15+", topic:'Review — only "Didn\'t Know" cards', time:"~30 min/day" }
+    ],
+    allLabel: "All",
+    allCards: "All Cards",
+    shuffle: "⟳ Shuffle",
+    statsTitle: "Answer Counter — Make your pick after flipping the card",
+    knew: "✓ Knew It",
+    almost: "~ Almost",
+    nope: "✗ Didn't Know",
+    cardSub: "cards",
+    tagQ: "❓ Question",
+    tagA: "💡 Answer",
+    flipHint: "click / Space",
+    prev: "← Back",
+    next: "Next →",
+    kbdHint: '<kbd class="kbd">Space</kbd> flip &nbsp;<kbd class="kbd">→</kbd> next &nbsp;<kbd class="kbd">←</kbd> back',
+    levelBeginner: "Beginner",
+    levelIntermediate: "Intermediate",
+    levelAdvanced: "Advanced"
+  }
+};
+
+// ========== TURKISH CARDS ==========
+const cardsTR = [
+  // ===== BEGINNER =====
+  // AWS General
+  { q:"AWS nedir?", a:"Amazon Web Services — depolama, veritabanı, ağ ve daha fazlasını içeren talep üzerine bilişim kaynakları sunan bir bulut bilişim platformu.", cat:"AWS Genel", level:"beginner" },
+  { q:"AWS kullanmanın temel faydaları nelerdir?", a:"Ölçeklenebilirlik, maliyet verimliliği, esneklik, güvenlik ve yüksek kullanılabilirlik.", cat:"AWS Genel", level:"beginner" },
+  { q:"AWS hangi bulut bilişim modellerini sunar?", a:"IaaS (Infrastructure as a Service), PaaS (Platform as a Service) ve SaaS (Software as a Service).", cat:"AWS Genel", level:"beginner" },
+  { q:"AWS Region nedir?", a:"Birden fazla veri merkezi (Availability Zone) içeren, coğrafi olarak ayrılmış bölge. Düşük gecikme için kullanıcıya yakın bölge seçilir.", cat:"AWS Genel", level:"beginner" },
+  { q:"Availability Zone (AZ) nedir?", a:"Bir AWS Region içindeki fiziksel veri merkezi. Her Region'da birden fazla AZ bulunur; hata toleransını sağlar.", cat:"AWS Genel", level:"beginner" },
+  // EC2 Beginner
+  { q:"EC2 nedir?", a:"Elastic Compute Cloud — bulutta yeniden boyutlandırılabilir işlem kapasitesi sunan, sanal makineler (instance) başlatıp yönetmeyi sağlayan web servisi.", cat:"EC2", level:"beginner" },
+  { q:"EC2 instance türleri nelerdir?", a:"General Purpose (t2/t3), Compute Optimized (c5), Memory Optimized (r5), Storage Optimized (i3), GPU Instances (p3).", cat:"EC2", level:"beginner" },
+  { q:"EC2 instance nasıl başlatılır?", a:"AWS Management Console, AWS CLI veya SDK aracılığıyla AMI, instance türü ve güvenlik ayarları seçilerek başlatılır.", cat:"EC2", level:"beginner" },
+  { q:"AMI (Amazon Machine Image) nedir?", a:"EC2 instance başlatmak için gereken işletim sistemi, uygulama sunucusu ve uygulamaları içeren önceden yapılandırılmış şablon.", cat:"EC2", level:"beginner" },
+  { q:"EC2 key pair nedir?", a:"EC2 instance'larına güvenli giriş için kullanılır. AWS'de saklanan public key ve kullanıcıda kalan private key'den oluşur.", cat:"EC2", level:"beginner" },
+  // S3 Beginner
+  { q:"Amazon S3 nedir?", a:"Simple Storage Service — verileri bucket içinde object olarak saklayan, yüksek kullanılabilirlik, ölçeklenebilirlik ve dayanıklılık sunan nesne depolama servisi.", cat:"S3", level:"beginner" },
+  { q:"S3 depolama sınıfları nelerdir?", a:"Standard, Intelligent-Tiering, Standard-IA, One Zone-IA, Glacier ve Glacier Deep Archive.", cat:"S3", level:"beginner" },
+  { q:"S3'te versiyonlama nasıl çalışır?", a:"Bir bucket'taki nesnenin birden fazla sürümünü saklar; kazara üzerine yazma veya silmeye karşı koruma sağlar.", cat:"S3", level:"beginner" },
+  { q:"S3 bucket nedir?", a:"Amazon S3'te nesneleri (dosyaları) saklamak için kullanılan konteyner. Her bucket benzersiz bir ada sahiptir.", cat:"S3", level:"beginner" },
+  { q:"S3 erişim kontrol politikaları nelerdir?", a:"Bucket'lara ve nesnelere erişimi yönetmek için Bucket Policy ve ACL (Access Control List) kullanılır.", cat:"S3", level:"beginner" },
+  // RDS Beginner
+  { q:"Amazon RDS nedir?", a:"Relational Database Service — MySQL, PostgreSQL, Oracle, SQL Server ve Amazon Aurora'yı destekleyen yönetilen veritabanı servisi.", cat:"RDS", level:"beginner" },
+  { q:"RDS'te yüksek kullanılabilirlik nasıl sağlanır?", a:"Multi-AZ deployment: veriyi otomatik olarak başka bir AZ'daki yedek instance'a kopyalar.", cat:"RDS", level:"beginner" },
+  { q:"Amazon Aurora nedir?", a:"MySQL ve PostgreSQL ile uyumlu, bulut ölçeklenebilirliği ve kullanılabilirliği için tasarlanmış yüksek performanslı ilişkisel veritabanı motoru.", cat:"RDS", level:"beginner" },
+  { q:"RDS'te otomatik yedekleme nasıl çalışır?", a:"RDS günlük otomatik yedekleme yapar ve işlem günlüklerini saklar; bu sayede belirli bir zamana geri dönüş (point-in-time recovery) sağlanır.", cat:"RDS", level:"beginner" },
+  { q:"RDS ile DynamoDB arasındaki fark nedir?", a:"RDS ilişkisel (SQL tabanlı) veritabanı için, DynamoDB ise yüksek verimlilik için tasarlanmış NoSQL veritabanı servisidir.", cat:"RDS", level:"beginner" },
+
+  // ===== INTERMEDIATE =====
+  // EC2 Intermediate
+  { q:"EC2 Spot Instance nedir?", a:"Kullanılmayan EC2 kapasitesi indirimli fiyata sunulur; AWS tarafından kısa süre içinde sonlandırılabilir.", cat:"EC2", level:"intermediate" },
+  { q:"EC2'de Auto Scaling nedir?", a:"Talebe göre EC2 instance sayısını otomatik ayarlar; uygulama performansını ve maliyet verimliliğini dengeler.", cat:"EC2", level:"intermediate" },
+  { q:"Elastic IP nedir?", a:"Herhangi bir instance veya VPC ağ arayüzüne bağlanabilen statik, genel IP adresi.", cat:"EC2", level:"intermediate" },
+  { q:"EC2'yi veri kaybetmeden durdurup başlatmak için ne yapılmalı?", a:"Instance durdurulduğunda EBS volume'leri korunur. Ancak instance store (geçici depolama) üzerindeki veri kaybolur.", cat:"EC2", level:"intermediate" },
+  { q:"EC2 iş yüküne göre instance türleri nelerdir?", a:"General Purpose (t3/m5), Compute Optimized (c5), Memory Optimized (r5), Storage Optimized (i3).", cat:"EC2", level:"intermediate" },
+  // S3 Intermediate
+  { q:"S3 lifecycle management nedir?", a:"Nesneleri depolama sınıfları arasında otomatik geçirir veya belirli bir süre sonra siler.", cat:"S3", level:"intermediate" },
+  { q:"S3 Cross-Region Replication (CRR) nedir?", a:"Felaket kurtarma veya düşük gecikmeli erişim için S3 bucket'taki nesneleri farklı bir AWS Region'daki bucket'a otomatik kopyalar.", cat:"S3", level:"intermediate" },
+  { q:"S3 Transfer Acceleration nedir?", a:"Amazon CloudFront'un küresel edge lokasyonlarını kullanarak S3'e dosya yüklemelerini hızlandıran özellik.", cat:"S3", level:"intermediate" },
+  { q:"S3'te şifreleme nasıl yönetilir?", a:"SSE-S3 (S3 yönetimli), SSE-KMS (KMS yönetimli) ve SSE-C (müşteri tarafından sağlanan) anahtarlarla sunucu taraflı şifreleme desteklenir.", cat:"S3", level:"intermediate" },
+  { q:"S3 nesnelerini nasıl herkese açık yaparsın?", a:"Bucket policy, ACL yapılandırarak veya nesneler için genel okuma izni etkinleştirerek.", cat:"S3", level:"intermediate" },
+  // IAM
+  { q:"AWS IAM nedir?", a:"Identity and Access Management — politikalar, roller ve kullanıcı hesaplarıyla AWS kaynaklarına güvenli erişimi kontrol etmeyi sağlayan servis.", cat:"IAM", level:"intermediate" },
+  { q:"IAM policy nedir?", a:"AWS kaynakları üzerindeki eylemler için izinleri tanımlayan; kullanıcı, grup veya rollere eklenen belge.", cat:"IAM", level:"intermediate" },
+  { q:"IAM role nedir?", a:"Kullanıcılar, uygulamalar veya servisler tarafından üstlenilebilen, izin politikalarına sahip AWS kimliği.", cat:"IAM", level:"intermediate" },
+  { q:"AWS'de MFA nasıl uygulanır?", a:"Normal kimlik bilgilerine ek olarak tek kullanımlık şifre girmesi gereken ekstra güvenlik katmanı ekler.", cat:"IAM", level:"intermediate" },
+  { q:"IAM user ile role arasındaki fark nedir?", a:"IAM user kalıcı kimlik bilgileriyle giriş yapan AWS kimliğidir; role ise AWS kaynaklarına geçici erişim sağlamak için tasarlanmıştır.", cat:"IAM", level:"intermediate" },
+
+  // ===== ADVANCED =====
+  // Lambda
+  { q:"AWS Lambda nedir?", a:"Sunucu yönetimine gerek kalmadan olaylara yanıt olarak kod çalıştıran serverless işlem servisi.", cat:"Lambda", level:"advanced" },
+  { q:"Lambda nasıl ölçeklenir?", a:"Tetikleyicilere yanıt olarak kodu çalıştırarak otomatik ölçeklenir; binlerce eşzamanlı yürütmeyi işleyebilir.", cat:"Lambda", level:"advanced" },
+  { q:"Lambda trigger'ları nelerdir?", a:"S3 yüklemeleri, API Gateway istekleri, DynamoDB tablo güncellemeleri veya zamanlanmış CloudWatch olayları gibi Lambda fonksiyonlarını başlatan olaylar.", cat:"Lambda", level:"advanced" },
+  { q:"Lambda fonksiyonları nasıl izlenir?", a:"Günlük kaydı için AWS CloudWatch Logs, performans takibi için CloudWatch Metrics ve izleme için AWS X-Ray kullanılır.", cat:"Lambda", level:"advanced" },
+  { q:"Lambda fonksiyonu için maksimum yürütme süresi nedir?", a:"15 dakika.", cat:"Lambda", level:"advanced" },
+  // CloudFormation
+  { q:"AWS CloudFormation nedir?", a:"Şablonlar aracılığıyla AWS kaynaklarını modellemenizi ve kurmanızı sağlayan, Infrastructure as Code (IaC) hizmetini kolaylaştıran servis.", cat:"CloudFormation", level:"advanced" },
+  { q:"CloudFormation stack nedir?", a:"CloudFormation şablonu kullanılarak tek bir birim olarak yönetilen AWS kaynakları koleksiyonu.", cat:"CloudFormation", level:"advanced" },
+  { q:"CloudFormation stack güncellemeleri nasıl yapılır?", a:"Şablon veya parametreler değiştirilerek güncellenir; CloudFormation değişiklikleri sistematik ve kontrollü şekilde uygular.", cat:"CloudFormation", level:"advanced" },
+  { q:"CloudFormation template nedir?", a:"AWS kaynaklarını ve yapılandırmalarını belirten JSON veya YAML formatındaki dosya.", cat:"CloudFormation", level:"advanced" },
+  { q:"CloudFormation drift detection nedir?", a:"Stack'teki kaynaklar ile şablonda tanımlanan beklenen yapılandırma arasındaki tutarsızlıkları tespit eder.", cat:"CloudFormation", level:"advanced" },
+  // DynamoDB
+  { q:"Amazon DynamoDB nedir?", a:"Hızlı ve güvenilir performans ile zahmetsiz ölçeklenebilirlik sunan tam yönetimli NoSQL veritabanı servisi.", cat:"DynamoDB", level:"advanced" },
+  { q:"DynamoDB partition key nedir?", a:"Hash key olarak da bilinir; DynamoDB'nin veriyi depolama için birden fazla partition'a dağıtmada kullandığı benzersiz nitelik.", cat:"DynamoDB", level:"advanced" },
+  { q:"DynamoDB global ve local secondary index nedir?", a:"GSI: primary key dışındaki niteliklere göre tüm tabloda sorgu yapmayı sağlar. LSI: aynı partition'da farklı sort key ile sorgu yapmayı sağlar.", cat:"DynamoDB", level:"advanced" },
+  { q:"DynamoDB auto-scaling nedir?", a:"Trafiğe yanıt olarak DynamoDB tablosunun okuma/yazma kapasitesini otomatik ayarlar; hem az hem fazla kaynak kullanımını önler.", cat:"DynamoDB", level:"advanced" },
+  { q:"DynamoDB Streams nedir?", a:"Tablo aktivitelerini (ekleme, güncelleme, silme) yakalar ve genellikle Lambda ile birlikte bu verinin gerçek zamanlı işlenmesini kolaylaştırır.", cat:"DynamoDB", level:"advanced" },
+  { q:"DynamoDB'de strong consistency nasıl sağlanır?", a:"Varsayılan olarak eventual consistency vardır. Güçlü tutarlılık için okuma işleminde 'ConsistentRead' belirtilmelidir.", cat:"DynamoDB", level:"advanced" },
+  { q:"DynamoDB TTL (Time to Live) nedir?", a:"Depolama maliyetlerini yönetmeye yardımcı olmak için DynamoDB tablolarından süresi dolmuş verileri otomatik siler.", cat:"DynamoDB", level:"advanced" },
+  // VPC
+  { q:"Amazon VPC nedir?", a:"Virtual Private Cloud — belirtilen sanal ağ içinde AWS kaynaklarını başlatmak için AWS bulutunun mantıksal olarak izole edilmiş alanı.", cat:"VPC", level:"advanced" },
+  { q:"VPC'de subnet nedir?", a:"EC2 instance'larının konuşlandırılabileceği, public veya private olarak kategorize edilen VPC IP adres alanının bir bölümü.", cat:"VPC", level:"advanced" },
+  { q:"Public ve private subnet farkı nedir?", a:"Public subnet internet gateway'e yönlendirmeye sahiptir (dışarıdan erişilebilir). Private subnet'in doğrudan internet bağlantısı yoktur.", cat:"VPC", level:"advanced" },
+  { q:"Internet Gateway nedir?", a:"VPC'nizdeki instance'lar ile internet arasındaki iletişimi sağlar.", cat:"VPC", level:"advanced" },
+  { q:"NAT instance ve NAT gateway nedir?", a:"Private subnet'teki instance'ların gelen trafiği engellerken internete erişmesini sağlar.", cat:"VPC", level:"advanced" },
+  { q:"VPC'de route table nedir?", a:"Subnet'lerinizdeki ağ trafiğinin nereye yönlendirileceğini belirleyen kurallardan oluşur.", cat:"VPC", level:"advanced" },
+  { q:"VPC peering nedir?", a:"İki VPC arasında özel bağlantı kurarak aynı ağdaymış gibi iletişim kurmalarını sağlar.", cat:"VPC", level:"advanced" },
+  { q:"VPC endpoint nedir?", a:"VPC'nizden desteklenen AWS servislerine internet gateway veya NAT gerektirmeden özel bağlantı sağlar.", cat:"VPC", level:"advanced" },
+  { q:"VPC flow log'lar nedir?", a:"Güvenlik ve sorun giderme amaçlı VPC'nizdeki ağ arayüzlerine gelen/giden IP trafiği hakkında ayrıntılı bilgi sunar.", cat:"VPC", level:"advanced" },
+  { q:"Security group ve NACL nedir?", a:"Security Group: instance'lar için sanal güvenlik duvarı (inbound+outbound). NACL: subnet düzeyinde trafik düzenler.", cat:"VPC", level:"advanced" },
+  // CloudWatch
+  { q:"Amazon CloudWatch nedir?", a:"Metrikleri ve günlükleri toplayarak AWS kaynakları ve uygulamalar hakkında içgörü ve veri sağlayan izleme ve gözlemlenebilirlik servisi.", cat:"CloudWatch", level:"advanced" },
+  { q:"CloudWatch Alarms nedir?", a:"Belirtilen eşik aşıldığında bildirimleri tetikleyen veya otomatik eylemleri başlatan metrik izleyiciler.", cat:"CloudWatch", level:"advanced" },
+  { q:"CloudWatch Metric nedir?", a:"Kaynakları ve uygulamaları izlemek için kullanılan zamana göre sıralanmış veri noktaları seti.", cat:"CloudWatch", level:"advanced" },
+  { q:"CloudWatch Logs nedir?", a:"AWS servislerinden, uygulamalardan ve sistemlerden günlüklerin gerçek zamanlı izlenmesini ve günlük verilerinin aranıp filtrelenmesini sağlar.", cat:"CloudWatch", level:"advanced" },
+  { q:"CloudWatch Events nedir?", a:"AWS kaynaklarındaki değişiklikleri tanımlayan sistem olayları akışı; otomatik yanıtlar veya Lambda fonksiyonu çağrısına olanak tanır.", cat:"CloudWatch", level:"advanced" },
+  { q:"CloudWatch ile CloudTrail arasındaki fark nedir?", a:"CloudWatch performans izlemeye (metrikler, günlükler) odaklanır. CloudTrail AWS hesabınızdaki API çağrılarının denetimine odaklanır.", cat:"CloudWatch", level:"advanced" },
+  { q:"AWS X-Ray nedir?", a:"Dağıtık uygulamaları hata ayıklamaya ve analiz etmeye yardımcı olan, isteklerin servisler arasındaki uçtan uca izlenmesini sağlayan servis.", cat:"CloudWatch", level:"advanced" },
+  // Elastic Beanstalk
+  { q:"AWS Elastic Beanstalk nedir?", a:"Popüler programlama dillerinde geliştirilen web uygulamalarının ve servislerinin dağıtımını ve ölçeklenmesini basitleştiren PaaS.", cat:"Beanstalk", level:"advanced" },
+  { q:"Elastic Beanstalk uygulama dağıtımını nasıl basitleştirir?", a:"Altyapı sağlama, yük dengeleme, ölçekleme ve izlemeyi yönetir; geliştiricilerin koda odaklanmasını sağlar.", cat:"Beanstalk", level:"advanced" },
+  { q:"Elastic Beanstalk'ta environment nedir?", a:"Elastic Beanstalk içinde uygulamanın belirli bir sürümünü çalıştıran AWS kaynakları koleksiyonu.", cat:"Beanstalk", level:"advanced" },
+  // ECS
+  { q:"Amazon ECS nedir?", a:"Elastic Container Service — EC2 instance'lardan oluşan bir cluster'da Docker container'larını çalıştırmanıza olanak tanıyan tam yönetimli container orkestrasyon servisi.", cat:"ECS", level:"advanced" },
+  { q:"ECS ile EKS arasındaki fark nedir?", a:"ECS, container yönetimi için AWS'ye özgü servis. EKS ise container orkestrasyonu için AWS'nin yönetilen Kubernetes servisi.", cat:"ECS", level:"advanced" },
+  { q:"ECS task ve service nedir?", a:"Task: çalışan container'ın tek instance'ı. ECS Service: task instance sayısını ve yük dengelemeyi yönetir.", cat:"ECS", level:"advanced" },
+  { q:"Amazon Fargate nedir?", a:"Container'ları temel EC2 instance'larını yönetmeden çalıştırmanıza olanak tanıyan, container'lar için serverless işlem motoru.", cat:"ECS", level:"advanced" },
+  // ELB
+  { q:"Elastic Load Balancer (ELB) nedir?", a:"Kullanılabilirliği artırmak için gelen trafiği birden fazla EC2 instance, container veya IP adresine otomatik dağıtır.", cat:"ELB", level:"advanced" },
+  { q:"AWS'deki load balancer türleri nelerdir?", a:"Application Load Balancer (ALB), Network Load Balancer (NLB) ve Gateway Load Balancer (GWLB).", cat:"ELB", level:"advanced" },
+  { q:"ALB ile NLB arasındaki fark nedir?", a:"ALB uygulama katmanında (HTTP/HTTPS) çalışır. NLB düşük gecikmeli yük dengeleme sağlayan aktarım katmanında (TCP) çalışır.", cat:"ELB", level:"advanced" },
+  { q:"ELB'de target group nedir?", a:"İstekleri EC2 instance'ları, container'lar veya IP adresleri gibi kayıtlı bir veya daha fazla hedefe yönlendirir.", cat:"ELB", level:"advanced" },
+  // CodePipeline
+  { q:"AWS CodePipeline nedir?", a:"Uygulama güncellemeleri için sürüm pipeline'ını otomatikleştiren CI/CD servisi.", cat:"CodePipeline", level:"advanced" },
+  { q:"CodePipeline'ın temel bileşenleri nelerdir?", a:"Kaynaklar (kod deposu), build sağlayıcıları (CodeBuild), test aşamaları ve dağıtım aşamaları.", cat:"CodePipeline", level:"advanced" },
+  { q:"AWS CodeBuild nedir?", a:"Kaynak kodu derleyen, testleri çalıştıran ve dağıtım için yazılım paketleri oluşturan tam yönetimli build servisi.", cat:"CodePipeline", level:"advanced" },
+  // Security
+  { q:"AWS KMS nedir?", a:"Key Management Service — AWS servisleri genelinde veriyi şifrelemek ve şifresini çözmek için şifreleme anahtarları oluşturup kontrol eden yönetilen servis.", cat:"Güvenlik", level:"advanced" },
+  { q:"AWS Secrets Manager nedir?", a:"Veritabanı kimlik bilgileri veya API anahtarları gibi hassas bilgilerin güvenli depolanmasını, alınmasını ve yönetilmesini sağlar.", cat:"Güvenlik", level:"advanced" },
+  { q:"AWS Shield nedir?", a:"AWS üzerinde çalışan uygulamaları ağ ve uygulama katmanı saldırılarından koruyan yönetilen DDoS koruma servisi.", cat:"Güvenlik", level:"advanced" },
+  { q:"Amazon GuardDuty nedir?", a:"AWS hesaplarını ve iş yüklerini kötü amaçlı veya yetkisiz etkinlikler için sürekli izleyen tehdit algılama servisi.", cat:"Güvenlik", level:"advanced" },
+  { q:"AWS WAF nedir?", a:"Web Application Firewall — SQL injection ve cross-site scripting gibi yaygın saldırılardan web uygulamalarını korumak için tasarlanmış güvenlik duvarı.", cat:"Güvenlik", level:"advanced" },
+  { q:"Amazon Inspector nedir?", a:"Uygulamaları güvenlik açıkları ve en iyi uygulamalardan sapmalar açısından otomatik değerlendirir.", cat:"Güvenlik", level:"advanced" },
+  { q:"AWS IAM role delegation nasıl çalışır?", a:"Uzun vadeli kimlik bilgilerini paylaşmaya gerek kalmadan IAM rolleri üstlenerek AWS kaynaklarına geçici erişim sağlar.", cat:"Güvenlik", level:"advanced" },
+
+  // ===== EK 10 SORU =====
+  { q:"Amazon Route 53 nedir?", a:"AWS'nin yüksek kullanılabilirliğe sahip ve ölçeklenebilir DNS (Domain Name System) web servisi. Domain kaydı, DNS yönlendirme ve sağlık denetimi işlevlerini yerine getirir.", cat:"Ağ", level:"advanced" },
+  { q:"Amazon SNS nedir?", a:"Simple Notification Service — uygulama-uygulama (A2A) ve uygulama-kişi (A2P) mesajlaşmayı destekleyen tam yönetimli pub/sub mesajlaşma servisi.", cat:"Mesajlaşma", level:"intermediate" },
+  { q:"Amazon SQS nedir?", a:"Simple Queue Service — dağıtık sistemleri ve mikro servisleri ayırmak için kullanılan tam yönetimli mesaj kuyruğu servisi. Mesajların kaybolmadan iletilmesini garantiler.", cat:"Mesajlaşma", level:"intermediate" },
+  { q:"SNS ile SQS arasındaki fark nedir?", a:"SNS push tabanlıdır (yayın/abone modeli, birden fazla alıcıya anlık bildirim). SQS pull tabanlıdır (mesajları kuyrukta bekletir, tüketici kendi çeker).", cat:"Mesajlaşma", level:"intermediate" },
+  { q:"Amazon Kinesis nedir?", a:"Gerçek zamanlı veri akışlarını toplamak, işlemek ve analiz etmek için kullanılan servis. Video, log, IoT ve uygulama olayları gibi büyük ölçekli veri akışlarını milisaniyeler içinde işler.", cat:"Veri & Analitik", level:"advanced" },
+  { q:"AWS CloudFront nedir?", a:"Düşük gecikmeyle içerik teslim etmek için dünya genelindeki edge lokasyonlarını kullanan CDN (Content Delivery Network) servisi.", cat:"Ağ", level:"intermediate" },
+  { q:"Amazon ElastiCache nedir?", a:"Redis veya Memcached kullanarak bulutta dağıtık bellek içi önbellekleme ortamı kurmayı kolaylaştıran tam yönetimli servis. Veritabanı yükünü azaltır, gecikmeyi düşürür.", cat:"Veritabanı", level:"advanced" },
+  { q:"AWS Glue nedir?", a:"Analitik, makine öğrenmesi ve uygulama geliştirme için verinin keşfedilmesini, hazırlanmasını ve entegrasyonunu kolaylaştıran sunucusuz veri entegrasyon servisi.", cat:"Veri & Analitik", level:"advanced" },
+  { q:"Amazon Redshift nedir?", a:"Büyük ölçekli veri kümelerini analiz etmek için kullanılan tam yönetimli, petabayt ölçeğinde bulut veri ambarı servisi. İlişkisel ve ilişkisel olmayan verilerle çalışır.", cat:"Veri & Analitik", level:"advanced" },
+  { q:"AWS Step Functions nedir?", a:"Lambda fonksiyonlarını ve diğer AWS servislerini görsel iş akışları aracılığıyla birleştiren sunucusuz orkestrasyon servisi. Karmaşık iş süreçlerini adım adım yönetir.", cat:"Lambda", level:"advanced" },
+];
+
+// ========== ENGLISH CARDS ==========
+const cardsEN = [
+  // ===== BEGINNER =====
+  // AWS General
+  { q:"What is AWS?", a:"Amazon Web Services — a cloud computing platform that offers on-demand computing resources including storage, databases, networking, and more.", cat:"AWS General", level:"beginner" },
+  { q:"What are the key benefits of using AWS?", a:"Scalability, cost efficiency, flexibility, security, and high availability.", cat:"AWS General", level:"beginner" },
+  { q:"What cloud computing models does AWS offer?", a:"IaaS (Infrastructure as a Service), PaaS (Platform as a Service), and SaaS (Software as a Service).", cat:"AWS General", level:"beginner" },
+  { q:"What is an AWS Region?", a:"A geographically separated area containing multiple data centers (Availability Zones). A region close to users is selected for low latency.", cat:"AWS General", level:"beginner" },
+  { q:"What is an Availability Zone (AZ)?", a:"A physical data center within an AWS Region. Each Region has multiple AZs; they provide fault tolerance.", cat:"AWS General", level:"beginner" },
+  // EC2 Beginner
+  { q:"What is EC2?", a:"Elastic Compute Cloud — a web service that provides resizable compute capacity in the cloud, allowing you to launch and manage virtual machines (instances).", cat:"EC2", level:"beginner" },
+  { q:"What are the EC2 instance types?", a:"General Purpose (t2/t3), Compute Optimized (c5), Memory Optimized (r5), Storage Optimized (i3), GPU Instances (p3).", cat:"EC2", level:"beginner" },
+  { q:"How do you launch an EC2 instance?", a:"Through AWS Management Console, AWS CLI, or SDK by selecting an AMI, instance type, and security settings.", cat:"EC2", level:"beginner" },
+  { q:"What is an AMI (Amazon Machine Image)?", a:"A pre-configured template containing the operating system, application server, and applications needed to launch an EC2 instance.", cat:"EC2", level:"beginner" },
+  { q:"What is an EC2 key pair?", a:"Used for secure login to EC2 instances. Consists of a public key stored in AWS and a private key kept by the user.", cat:"EC2", level:"beginner" },
+  // S3 Beginner
+  { q:"What is Amazon S3?", a:"Simple Storage Service — an object storage service that stores data as objects in buckets, offering high availability, scalability, and durability.", cat:"S3", level:"beginner" },
+  { q:"What are S3 storage classes?", a:"Standard, Intelligent-Tiering, Standard-IA, One Zone-IA, Glacier, and Glacier Deep Archive.", cat:"S3", level:"beginner" },
+  { q:"How does versioning work in S3?", a:"It stores multiple versions of an object in a bucket; provides protection against accidental overwrites or deletions.", cat:"S3", level:"beginner" },
+  { q:"What is an S3 bucket?", a:"A container used to store objects (files) in Amazon S3. Each bucket has a globally unique name.", cat:"S3", level:"beginner" },
+  { q:"What are S3 access control policies?", a:"Bucket Policy and ACL (Access Control List) are used to manage access to buckets and objects.", cat:"S3", level:"beginner" },
+  // RDS Beginner
+  { q:"What is Amazon RDS?", a:"Relational Database Service — a managed database service supporting MySQL, PostgreSQL, Oracle, SQL Server, and Amazon Aurora.", cat:"RDS", level:"beginner" },
+  { q:"How is high availability achieved in RDS?", a:"Multi-AZ deployment: automatically replicates data to a standby instance in another AZ.", cat:"RDS", level:"beginner" },
+  { q:"What is Amazon Aurora?", a:"A high-performance relational database engine compatible with MySQL and PostgreSQL, designed for cloud scalability and availability.", cat:"RDS", level:"beginner" },
+  { q:"How does automatic backup work in RDS?", a:"RDS performs daily automatic backups and stores transaction logs; this enables point-in-time recovery.", cat:"RDS", level:"beginner" },
+  { q:"What is the difference between RDS and DynamoDB?", a:"RDS is for relational (SQL-based) databases, while DynamoDB is a NoSQL database service designed for high throughput.", cat:"RDS", level:"beginner" },
+
+  // ===== INTERMEDIATE =====
+  // EC2 Intermediate
+  { q:"What is an EC2 Spot Instance?", a:"Unused EC2 capacity offered at a discounted price; can be terminated by AWS with short notice.", cat:"EC2", level:"intermediate" },
+  { q:"What is Auto Scaling in EC2?", a:"Automatically adjusts the number of EC2 instances based on demand; balances application performance and cost efficiency.", cat:"EC2", level:"intermediate" },
+  { q:"What is an Elastic IP?", a:"A static, public IP address that can be associated with any instance or VPC network interface.", cat:"EC2", level:"intermediate" },
+  { q:"How do you stop and start EC2 without losing data?", a:"When an instance is stopped, EBS volumes are preserved. However, data on instance store (ephemeral storage) is lost.", cat:"EC2", level:"intermediate" },
+  { q:"What are EC2 instance types based on workload?", a:"General Purpose (t3/m5), Compute Optimized (c5), Memory Optimized (r5), Storage Optimized (i3).", cat:"EC2", level:"intermediate" },
+  // S3 Intermediate
+  { q:"What is S3 lifecycle management?", a:"Automatically transitions objects between storage classes or deletes them after a specified period.", cat:"S3", level:"intermediate" },
+  { q:"What is S3 Cross-Region Replication (CRR)?", a:"Automatically copies objects in an S3 bucket to a bucket in a different AWS Region for disaster recovery or low-latency access.", cat:"S3", level:"intermediate" },
+  { q:"What is S3 Transfer Acceleration?", a:"A feature that speeds up file uploads to S3 using Amazon CloudFront's global edge locations.", cat:"S3", level:"intermediate" },
+  { q:"How is encryption managed in S3?", a:"Server-side encryption is supported with SSE-S3 (S3-managed), SSE-KMS (KMS-managed), and SSE-C (customer-provided) keys.", cat:"S3", level:"intermediate" },
+  { q:"How do you make S3 objects public?", a:"By configuring a bucket policy, ACL, or enabling public read access for objects.", cat:"S3", level:"intermediate" },
+  // IAM
+  { q:"What is AWS IAM?", a:"Identity and Access Management — a service that enables secure access control to AWS resources through policies, roles, and user accounts.", cat:"IAM", level:"intermediate" },
+  { q:"What is an IAM policy?", a:"A document that defines permissions for actions on AWS resources; attached to users, groups, or roles.", cat:"IAM", level:"intermediate" },
+  { q:"What is an IAM role?", a:"An AWS identity with permission policies that can be assumed by users, applications, or services.", cat:"IAM", level:"intermediate" },
+  { q:"How is MFA implemented in AWS?", a:"Adds an extra security layer requiring a one-time password in addition to regular credentials.", cat:"IAM", level:"intermediate" },
+  { q:"What is the difference between an IAM user and a role?", a:"An IAM user is an AWS identity that logs in with permanent credentials; a role is designed to provide temporary access to AWS resources.", cat:"IAM", level:"intermediate" },
+
+  // ===== ADVANCED =====
+  // Lambda
+  { q:"What is AWS Lambda?", a:"A serverless compute service that runs code in response to events without the need for server management.", cat:"Lambda", level:"advanced" },
+  { q:"How does Lambda scale?", a:"Automatically scales by running code in response to triggers; can handle thousands of concurrent executions.", cat:"Lambda", level:"advanced" },
+  { q:"What are Lambda triggers?", a:"Events that invoke Lambda functions, such as S3 uploads, API Gateway requests, DynamoDB table updates, or scheduled CloudWatch events.", cat:"Lambda", level:"advanced" },
+  { q:"How are Lambda functions monitored?", a:"AWS CloudWatch Logs for logging, CloudWatch Metrics for performance tracking, and AWS X-Ray for tracing.", cat:"Lambda", level:"advanced" },
+  { q:"What is the maximum execution time for a Lambda function?", a:"15 minutes.", cat:"Lambda", level:"advanced" },
+  // CloudFormation
+  { q:"What is AWS CloudFormation?", a:"A service that facilitates Infrastructure as Code (IaC) by allowing you to model and set up AWS resources through templates.", cat:"CloudFormation", level:"advanced" },
+  { q:"What is a CloudFormation stack?", a:"A collection of AWS resources managed as a single unit using a CloudFormation template.", cat:"CloudFormation", level:"advanced" },
+  { q:"How are CloudFormation stack updates performed?", a:"Updated by modifying the template or parameters; CloudFormation applies changes systematically and in a controlled manner.", cat:"CloudFormation", level:"advanced" },
+  { q:"What is a CloudFormation template?", a:"A JSON or YAML format file that specifies AWS resources and their configurations.", cat:"CloudFormation", level:"advanced" },
+  { q:"What is CloudFormation drift detection?", a:"Detects discrepancies between the resources in a stack and the expected configuration defined in the template.", cat:"CloudFormation", level:"advanced" },
+  // DynamoDB
+  { q:"What is Amazon DynamoDB?", a:"A fully managed NoSQL database service offering fast and reliable performance with seamless scalability.", cat:"DynamoDB", level:"advanced" },
+  { q:"What is a DynamoDB partition key?", a:"Also known as a hash key; a unique attribute that DynamoDB uses to distribute data across multiple partitions for storage.", cat:"DynamoDB", level:"advanced" },
+  { q:"What are DynamoDB global and local secondary indexes?", a:"GSI: enables querying across the entire table on attributes other than the primary key. LSI: enables querying with a different sort key within the same partition.", cat:"DynamoDB", level:"advanced" },
+  { q:"What is DynamoDB auto-scaling?", a:"Automatically adjusts the read/write capacity of a DynamoDB table in response to traffic; prevents both under and over-provisioning.", cat:"DynamoDB", level:"advanced" },
+  { q:"What is DynamoDB Streams?", a:"Captures table activities (inserts, updates, deletes) and typically facilitates real-time processing of this data with Lambda.", cat:"DynamoDB", level:"advanced" },
+  { q:"How is strong consistency achieved in DynamoDB?", a:"By default, eventual consistency is used. For strong consistency, 'ConsistentRead' must be specified in the read operation.", cat:"DynamoDB", level:"advanced" },
+  { q:"What is DynamoDB TTL (Time to Live)?", a:"Automatically deletes expired data from DynamoDB tables to help manage storage costs.", cat:"DynamoDB", level:"advanced" },
+  // VPC
+  { q:"What is Amazon VPC?", a:"Virtual Private Cloud — a logically isolated section of the AWS cloud where you can launch AWS resources in a defined virtual network.", cat:"VPC", level:"advanced" },
+  { q:"What is a subnet in VPC?", a:"A segment of a VPC's IP address range where EC2 instances can be deployed, categorized as public or private.", cat:"VPC", level:"advanced" },
+  { q:"What is the difference between public and private subnets?", a:"A public subnet has routing to an internet gateway (accessible from outside). A private subnet has no direct internet connection.", cat:"VPC", level:"advanced" },
+  { q:"What is an Internet Gateway?", a:"Enables communication between instances in your VPC and the internet.", cat:"VPC", level:"advanced" },
+  { q:"What are NAT instance and NAT gateway?", a:"Allow instances in private subnets to access the internet while blocking incoming traffic.", cat:"VPC", level:"advanced" },
+  { q:"What is a route table in VPC?", a:"Consists of rules that determine where network traffic from your subnets is directed.", cat:"VPC", level:"advanced" },
+  { q:"What is VPC peering?", a:"Establishes a private connection between two VPCs, enabling them to communicate as if they were on the same network.", cat:"VPC", level:"advanced" },
+  { q:"What is a VPC endpoint?", a:"Provides a private connection from your VPC to supported AWS services without requiring an internet gateway or NAT.", cat:"VPC", level:"advanced" },
+  { q:"What are VPC flow logs?", a:"Provide detailed information about IP traffic going to and from network interfaces in your VPC for security and troubleshooting.", cat:"VPC", level:"advanced" },
+  { q:"What are Security Groups and NACLs?", a:"Security Group: a virtual firewall for instances (inbound+outbound). NACL: regulates traffic at the subnet level.", cat:"VPC", level:"advanced" },
+  // CloudWatch
+  { q:"What is Amazon CloudWatch?", a:"A monitoring and observability service that collects metrics and logs, providing insights and data about AWS resources and applications.", cat:"CloudWatch", level:"advanced" },
+  { q:"What are CloudWatch Alarms?", a:"Metric monitors that trigger notifications or initiate automated actions when a specified threshold is exceeded.", cat:"CloudWatch", level:"advanced" },
+  { q:"What is a CloudWatch Metric?", a:"A time-ordered set of data points used to monitor resources and applications.", cat:"CloudWatch", level:"advanced" },
+  { q:"What is CloudWatch Logs?", a:"Enables real-time monitoring of logs from AWS services, applications, and systems, and allows searching and filtering log data.", cat:"CloudWatch", level:"advanced" },
+  { q:"What is CloudWatch Events?", a:"A stream of system events describing changes in AWS resources; enables automated responses or Lambda function invocations.", cat:"CloudWatch", level:"advanced" },
+  { q:"What is the difference between CloudWatch and CloudTrail?", a:"CloudWatch focuses on performance monitoring (metrics, logs). CloudTrail focuses on auditing API calls in your AWS account.", cat:"CloudWatch", level:"advanced" },
+  { q:"What is AWS X-Ray?", a:"A service that helps debug and analyze distributed applications by providing end-to-end tracing of requests across services.", cat:"CloudWatch", level:"advanced" },
+  // Elastic Beanstalk
+  { q:"What is AWS Elastic Beanstalk?", a:"A PaaS that simplifies deployment and scaling of web applications and services developed in popular programming languages.", cat:"Beanstalk", level:"advanced" },
+  { q:"How does Elastic Beanstalk simplify application deployment?", a:"Manages infrastructure provisioning, load balancing, scaling, and monitoring; allows developers to focus on code.", cat:"Beanstalk", level:"advanced" },
+  { q:"What is an environment in Elastic Beanstalk?", a:"A collection of AWS resources within Elastic Beanstalk that runs a specific version of an application.", cat:"Beanstalk", level:"advanced" },
+  // ECS
+  { q:"What is Amazon ECS?", a:"Elastic Container Service — a fully managed container orchestration service that lets you run Docker containers on a cluster of EC2 instances.", cat:"ECS", level:"advanced" },
+  { q:"What is the difference between ECS and EKS?", a:"ECS is an AWS-native service for container management. EKS is AWS's managed Kubernetes service for container orchestration.", cat:"ECS", level:"advanced" },
+  { q:"What are ECS tasks and services?", a:"Task: a single instance of a running container. ECS Service: manages the number of task instances and load balancing.", cat:"ECS", level:"advanced" },
+  { q:"What is Amazon Fargate?", a:"A serverless compute engine for containers that lets you run containers without managing the underlying EC2 instances.", cat:"ECS", level:"advanced" },
+  // ELB
+  { q:"What is Elastic Load Balancer (ELB)?", a:"Automatically distributes incoming traffic across multiple EC2 instances, containers, or IP addresses to improve availability.", cat:"ELB", level:"advanced" },
+  { q:"What are the types of load balancers in AWS?", a:"Application Load Balancer (ALB), Network Load Balancer (NLB), and Gateway Load Balancer (GWLB).", cat:"ELB", level:"advanced" },
+  { q:"What is the difference between ALB and NLB?", a:"ALB operates at the application layer (HTTP/HTTPS). NLB operates at the transport layer (TCP), providing low-latency load balancing.", cat:"ELB", level:"advanced" },
+  { q:"What is a target group in ELB?", a:"Routes requests to one or more registered targets such as EC2 instances, containers, or IP addresses.", cat:"ELB", level:"advanced" },
+  // CodePipeline
+  { q:"What is AWS CodePipeline?", a:"A CI/CD service that automates the release pipeline for application updates.", cat:"CodePipeline", level:"advanced" },
+  { q:"What are the key components of CodePipeline?", a:"Sources (code repository), build providers (CodeBuild), test stages, and deployment stages.", cat:"CodePipeline", level:"advanced" },
+  { q:"What is AWS CodeBuild?", a:"A fully managed build service that compiles source code, runs tests, and produces software packages for deployment.", cat:"CodePipeline", level:"advanced" },
+  // Security
+  { q:"What is AWS KMS?", a:"Key Management Service — a managed service that creates and controls encryption keys to encrypt and decrypt data across AWS services.", cat:"Security", level:"advanced" },
+  { q:"What is AWS Secrets Manager?", a:"Enables secure storage, retrieval, and management of sensitive information such as database credentials or API keys.", cat:"Security", level:"advanced" },
+  { q:"What is AWS Shield?", a:"A managed DDoS protection service that protects applications running on AWS from network and application layer attacks.", cat:"Security", level:"advanced" },
+  { q:"What is Amazon GuardDuty?", a:"A threat detection service that continuously monitors AWS accounts and workloads for malicious or unauthorized activity.", cat:"Security", level:"advanced" },
+  { q:"What is AWS WAF?", a:"Web Application Firewall — a firewall designed to protect web applications from common attacks such as SQL injection and cross-site scripting.", cat:"Security", level:"advanced" },
+  { q:"What is Amazon Inspector?", a:"Automatically assesses applications for security vulnerabilities and deviations from best practices.", cat:"Security", level:"advanced" },
+  { q:"How does AWS IAM role delegation work?", a:"Provides temporary access to AWS resources by assuming IAM roles without the need to share long-term credentials.", cat:"Security", level:"advanced" },
+
+  // ===== EXTRA 10 QUESTIONS =====
+  { q:"What is Amazon Route 53?", a:"AWS's highly available and scalable DNS (Domain Name System) web service. It performs domain registration, DNS routing, and health checking.", cat:"Networking", level:"advanced" },
+  { q:"What is Amazon SNS?", a:"Simple Notification Service — a fully managed pub/sub messaging service supporting application-to-application (A2A) and application-to-person (A2P) messaging.", cat:"Messaging", level:"intermediate" },
+  { q:"What is Amazon SQS?", a:"Simple Queue Service — a fully managed message queue service used to decouple distributed systems and microservices. Guarantees message delivery without loss.", cat:"Messaging", level:"intermediate" },
+  { q:"What is the difference between SNS and SQS?", a:"SNS is push-based (publish/subscribe model, instant notifications to multiple recipients). SQS is pull-based (holds messages in a queue, consumers pull them).", cat:"Messaging", level:"intermediate" },
+  { q:"What is Amazon Kinesis?", a:"A service used to collect, process, and analyze real-time data streams. Processes large-scale data streams like video, logs, IoT, and application events within milliseconds.", cat:"Data & Analytics", level:"advanced" },
+  { q:"What is AWS CloudFront?", a:"A CDN (Content Delivery Network) service that uses global edge locations to deliver content with low latency.", cat:"Networking", level:"intermediate" },
+  { q:"What is Amazon ElastiCache?", a:"A fully managed service that simplifies deploying distributed in-memory caching environments using Redis or Memcached. Reduces database load and lowers latency.", cat:"Database", level:"advanced" },
+  { q:"What is AWS Glue?", a:"A serverless data integration service that simplifies data discovery, preparation, and integration for analytics, machine learning, and application development.", cat:"Data & Analytics", level:"advanced" },
+  { q:"What is Amazon Redshift?", a:"A fully managed, petabyte-scale cloud data warehouse service used to analyze large-scale datasets. Works with both relational and non-relational data.", cat:"Data & Analytics", level:"advanced" },
+  { q:"What is AWS Step Functions?", a:"A serverless orchestration service that combines Lambda functions and other AWS services through visual workflows. Manages complex business processes step by step.", cat:"Lambda", level:"advanced" },
+];
+
+// ========== STATE ==========
+let currentLang = 'tr';
+let allCards = [...cardsTR];
+let categories = [];
+let currentCat = "";
+let deck = [];
+let idx = 0;
+let isFlipped = false;
+let stats = { knew: 0, almost: 0, nope: 0 };
+
+// ========== LANGUAGE SWITCH ==========
+function switchLang(lang) {
+  currentLang = lang;
+  allCards = lang === 'tr' ? [...cardsTR] : [...cardsEN];
+
+  document.getElementById('lang-tr').classList.toggle('active', lang === 'tr');
+  document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+  document.documentElement.lang = lang;
+
+  updateUITexts();
+  buildCategories();
+  buildTabs();
+  currentCat = uiText[lang].allLabel;
+  deck = [...allCards];
+  idx = 0;
+  stats = { knew: 0, almost: 0, nope: 0 };
+  updateStats();
+  showCard();
+}
+
+function updateUITexts() {
+  const t = uiText[currentLang];
+  document.getElementById('subtitle').textContent = t.subtitle;
+  document.getElementById('plan-title').textContent = t.planTitle;
+  document.getElementById('shuffle-btn').textContent = t.shuffle;
+  document.getElementById('stats-title').textContent = t.statsTitle;
+  document.getElementById('label-knew').textContent = t.knew;
+  document.getElementById('label-almost').textContent = t.almost;
+  document.getElementById('label-nope').textContent = t.nope;
+  document.getElementById('sub-knew').textContent = t.cardSub;
+  document.getElementById('sub-almost').textContent = t.cardSub;
+  document.getElementById('sub-nope').textContent = t.cardSub;
+  document.getElementById('tag-q').textContent = t.tagQ;
+  document.getElementById('tag-a').textContent = t.tagA;
+  document.getElementById('flip-hint').innerHTML = '<span class="flip-icon">\u21BB</span> ' + t.flipHint;
+  document.getElementById('btn-knew').textContent = t.knew;
+  document.getElementById('btn-almost').textContent = t.almost;
+  document.getElementById('btn-nope').textContent = t.nope;
+  document.getElementById('btn-prev').textContent = t.prev;
+  document.getElementById('btn-next').textContent = t.next;
+  document.getElementById('kbd-hint').innerHTML = t.kbdHint;
+  document.getElementById('section-label').textContent = t.allCards;
+
+  // Build plan items
+  const planContainer = document.getElementById('plan-items');
+  planContainer.innerHTML = '';
+  t.plan.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'plan-item';
+    div.innerHTML = `<span class="plan-day">${p.day}</span><span class="plan-topic">${p.topic}</span><span class="plan-time">${p.time}</span>`;
+    planContainer.appendChild(div);
+  });
+}
+
+// ========== CATEGORIES & TABS ==========
+function buildCategories() {
+  categories = [uiText[currentLang].allLabel, ...new Set(allCards.map(c => c.cat))];
+}
+
+function buildTabs() {
+  const container = document.getElementById('tabs');
+  container.innerHTML = '';
+  const allLabel = uiText[currentLang].allLabel;
+  categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (cat === allLabel ? ' active' : '');
+    btn.textContent = cat === allLabel ? `${allLabel} (${allCards.length})` : cat;
+    btn.onclick = () => selectCat(cat);
+    container.appendChild(btn);
+  });
+}
+
+function selectCat(cat) {
+  currentCat = cat;
+  const allLabel = uiText[currentLang].allLabel;
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', categories[i] === cat);
+  });
+  deck = cat === allLabel ? [...allCards] : allCards.filter(c => c.cat === cat);
+  idx = 0;
+  stats = { knew:0, almost:0, nope:0 };
+  updateStats();
+  document.getElementById('section-label').textContent = cat === allLabel ? uiText[currentLang].allCards : cat;
+  showCard();
+}
+
+function shuffle() {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  idx = 0;
+  showCard();
+}
+
+function showCard() {
+  isFlipped = false;
+  const card = document.getElementById('card');
+  card.classList.remove('flipped');
+  document.getElementById('feedback').style.display = 'none';
+
+  const c = deck[idx];
+  document.getElementById('question-text').textContent = c.q;
+  document.getElementById('answer-text').textContent = c.a;
+  document.getElementById('card-num').textContent = `${idx + 1} / ${deck.length}`;
+
+  const t = uiText[currentLang];
+  const levelText = c.level === 'beginner' ? t.levelBeginner : c.level === 'intermediate' ? t.levelIntermediate : t.levelAdvanced;
+  const levelClass = `level-${c.level}`;
+  document.getElementById('card-level').textContent = levelText;
+  document.getElementById('card-level').className = `card-level ${levelClass}`;
+  document.getElementById('card-level-back').textContent = levelText;
+  document.getElementById('card-level-back').className = `card-level ${levelClass}`;
+
+  const pct = deck.length > 0 ? ((idx) / deck.length) * 100 : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-count').textContent = `${idx + 1} / ${deck.length}`;
+
+  document.getElementById('btn-prev').disabled = idx === 0;
+}
+
+function flipCard() {
+  isFlipped = !isFlipped;
+  document.getElementById('card').classList.toggle('flipped', isFlipped);
+  document.getElementById('feedback').style.display = isFlipped ? 'flex' : 'none';
+}
+
+function markCard(result) {
+  if (result === 'knew') stats.knew++;
+  else if (result === 'almost') stats.almost++;
+  else stats.nope++;
+  updateStats();
+  nextCard();
+}
+
+function updateStats() {
+  document.getElementById('stat-knew').textContent = stats.knew;
+  document.getElementById('stat-almost').textContent = stats.almost;
+  document.getElementById('stat-nope').textContent = stats.nope;
+}
+
+function nextCard() {
+  if (idx < deck.length - 1) {
+    idx++;
+    showCard();
+  } else {
+    document.getElementById('progress-bar').style.width = '100%';
+  }
+}
+
+function prevCard() {
+  if (idx > 0) {
+    idx--;
+    showCard();
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); flipCard(); }
+  else if (e.code === 'ArrowRight') nextCard();
+  else if (e.code === 'ArrowLeft') prevCard();
+});
+
+// ========== INIT ==========
+switchLang('tr');
+</script>
+</body>
+</html>
